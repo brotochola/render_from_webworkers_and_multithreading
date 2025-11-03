@@ -27,9 +27,8 @@
 <body>
     <p id="pixiWorkerFPS"></p>
     <p id="logicWorkerFPS"></p>
-    <button onclick="pixiWorker.postMessage('getFrameCount')">pedir contador</button>
-    <button onclick="logicWorker.postMessage('mandarDataAPixiWorker')">hacer q el logic worker le mande data al pixi
-        worker</button>
+
+
 
     <script>
         // Crear elemento canvas e insertarlo en el DOM
@@ -58,7 +57,7 @@
 
         // Escuchar mensajes del pixi worker (solo para debugging/UI)
         pixiWorker.onmessage = (e) => {
-            console.log("MAIN recibió datos del pixi worker", e.data);
+            // console.log("MAIN recibió datos del pixi worker", e.data);
             if (e.data.msg === "fps") {
                 document.querySelector('#pixiWorkerFPS').textContent = "pixi worker fps: " + e.data.fps;
             }
@@ -66,7 +65,7 @@
 
         // Escuchar mensajes del logic worker (solo para debugging/UI)
         logicWorker.onmessage = (e) => {
-            console.log("MAIN recibió datos del logic worker", e.data);
+            // console.log("MAIN recibió datos del logic worker", e.data);
             if (e.data.msg === "fps") {
                 document.querySelector('#logicWorkerFPS').textContent = "logic worker fps: " + e.data.fps;
             }

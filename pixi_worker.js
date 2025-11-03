@@ -1,5 +1,6 @@
 importScripts("pixi4webworkers.js");
 
+const cantBunnies = 1200;
 let FRAMENUM = 0;
 let app;
 let width, height, resolution, view;
@@ -60,7 +61,7 @@ async function initPIXI(e) {
   const texture = await PIXI.Assets.load("/1.png");
 
   // Crear 1000 sprites de bunny
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < cantBunnies; i++) {
     const bunny = new PIXI.Sprite(texture);
     bunny.anchor.set(0.5); // Centro del sprite
     bunnies.push(bunny);
