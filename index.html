@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>PixiJS 8 in Web Worker</title>
+    <title>PixiJS 8 - Workers vs Main Thread</title>
     <style>
         body {
             margin: 0;
@@ -20,55 +20,84 @@
         p {
             color: white;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
 
+        #config {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
+
+    <p id="config"></p>
     <p id="pixiWorkerFPS"></p>
     <p id="logicWorkerFPS"></p>
 
-
-
+    <!-- Load scripts in order -->
+    <script src="boid.js"></script>
+    <script src="main_thread.js"></script>
     <script>
-        // Crear elemento canvas e insertarlo en el DOM
+
+        // ==================== CONFIGURATION ====================
+        const config = {
+            useWorkers: true  // Set to true to use workers, false to run on main thread
+        };
+        // =======================================================
+
+        document.querySelector('#config').textContent =
+            `Mode: ${config.useWorkers ? 'WORKERS' : 'MAIN THREAD'}`;
+
         const width = 800, height = 600;
         const resolution = window.devicePixelRatio;
-        const canvas = document.createElement('canvas');
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        document.body.appendChild(canvas);
-        console.log("generated canvas", canvas);
 
-        // Crear los workers
-        const pixiWorker = new Worker('pixi_worker.js');
-        const logicWorker = new Worker('logic_worker.js');
+        if (config.useWorkers) {
+            // ==================== WORKERS MODE ====================
+            console.log("Starting in WORKERS mode");
 
-        // Crear un MessageChannel para comunicación directa entre workers
-        const channel = new MessageChannel();
+            const canvas = document.createElement('canvas');
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            document.body.appendChild(canvas);
 
-        // Transferir el canvas al pixi worker
-        const view = canvas.transferControlToOffscreen();
-        pixiWorker.postMessage({ msg: "init", width, height, resolution, view }, [view]);
+            // Crear los workers
+            const pixiWorker = new Worker('pixi_worker.js');
+            const logicWorker = new Worker('logic_worker.js');
 
-        // Enviar un puerto del canal a cada worker para que se comuniquen directamente
-        pixiWorker.postMessage({ msg: "setPort", port: channel.port1 }, [channel.port1]);
-        logicWorker.postMessage({ msg: "setPort", port: channel.port2 }, [channel.port2]);
+            // Crear un MessageChannel para comunicación directa entre workers
+            const channel = new MessageChannel();
 
-        // Escuchar mensajes del pixi worker (solo para debugging/UI)
-        pixiWorker.onmessage = (e) => {
-            // console.log("MAIN recibió datos del pixi worker", e.data);
-            if (e.data.msg === "fps") {
-                document.querySelector('#pixiWorkerFPS').textContent = "pixi worker fps: " + e.data.fps;
+            // Transferir el canvas al pixi worker
+            const view = canvas.transferControlToOffscreen();
+            pixiWorker.postMessage({ msg: "init", width, height, resolution, view }, [view]);
+
+            // Enviar un puerto del canal a cada worker para que se comuniquen directamente
+            pixiWorker.postMessage({ msg: "setPort", port: channel.port1 }, [channel.port1]);
+            logicWorker.postMessage({ msg: "setPort", port: channel.port2 }, [channel.port2]);
+
+            // Escuchar mensajes del pixi worker (solo para debugging/UI)
+            pixiWorker.onmessage = (e) => {
+                if (e.data.msg === "fps") {
+                    document.querySelector('#pixiWorkerFPS').textContent = "pixi worker fps: " + e.data.fps;
+                }
             }
-        }
 
-        // Escuchar mensajes del logic worker (solo para debugging/UI)
-        logicWorker.onmessage = (e) => {
-            // console.log("MAIN recibió datos del logic worker", e.data);
-            if (e.data.msg === "fps") {
-                document.querySelector('#logicWorkerFPS').textContent = "logic worker fps: " + e.data.fps;
+            // Escuchar mensajes del logic worker (solo para debugging/UI)
+            logicWorker.onmessage = (e) => {
+                if (e.data.msg === "fps") {
+                    document.querySelector('#logicWorkerFPS').textContent = "logic worker fps: " + e.data.fps;
+                }
             }
+        } else {
+            // ==================== MAIN THREAD MODE ====================
+            console.log("Starting in MAIN THREAD mode");
+
+            // Load PIXI script dynamically, then initialize main thread
+            const script = document.createElement('script');
+            script.src = 'pixi4webworkers.js';
+            script.onload = () => initMainThread(width, height, resolution);
+            document.head.appendChild(script);
         }
     </script>
 </body>

@@ -1,6 +1,8 @@
+// Import PIXI as ES6 module
+// Note: We load pixi4webworkers.js with importScripts since it's not an ES module
 importScripts("pixi4webworkers.js");
+importScripts("boid.js");
 
-const cantBunnies = 1200;
 let FRAMENUM = 0;
 let app;
 let width, height, resolution, view;
@@ -23,16 +25,36 @@ function gameLoop() {
   FRAMENUM++;
   const now = performance.now();
   deltaTime = now - lastTime;
+  deltaTimeRatio = deltaTime / 16.67;
+
   lastTime = now;
   fps = 1000 / deltaTime;
 
   // Actualizar posiciones de todos los sprites desde los buffers
   if (currentX && currentY && currentRotation && currentScale) {
+    // console.log(bunnies[0].x, currentX[0]);
     for (let i = 0; i < entityCount; i++) {
       if (bunnies[i]) {
-        bunnies[i].x = currentX[i];
-        bunnies[i].y = currentY[i];
-        bunnies[i].rotation = currentRotation[i];
+        // if (i % 3 == 0) {
+        //   bunnies[i].tint = 0xff7777;
+        //   bunnies[i].x += (currentX[i] - bunnies[i].x) * 0.1;
+        //   bunnies[i].y += (currentY[i] - bunnies[i].y) * 0.1;
+        // } else if (i % 3 == 1) {
+        //   bunnies[i].tint = 0x00ff00;
+        //   bunnies[i].x += (currentX[i] - bunnies[i].x) * 0.33;
+        //   bunnies[i].y += (currentY[i] - bunnies[i].y) * 0.33;
+        // } else {
+        //   bunnies[i].x = currentX[i];
+        //   bunnies[i].y = currentY[i];
+        // }
+
+        // Este numerode lerp deberia tener q ver con cuanto mas lento es el logic worker
+        //en comparacion con el pixi worker
+        const lerpFactor = 0.1;
+        bunnies[i].x += (currentX[i] - bunnies[i].x) * lerpFactor;
+        bunnies[i].y += (currentY[i] - bunnies[i].y) * lerpFactor;
+
+        bunnies[i].rotation += (currentRotation[i] - bunnies[i].rotation) * 0.2;
         bunnies[i].scale.set(currentScale[i]);
       }
     }
@@ -61,7 +83,7 @@ async function initPIXI(e) {
   const texture = await PIXI.Assets.load("/1.png");
 
   // Crear 1000 sprites de bunny
-  for (let i = 0; i < cantBunnies; i++) {
+  for (let i = 0; i < ENTITY_COUNT; i++) {
     const bunny = new PIXI.Sprite(texture);
     bunny.anchor.set(0.5); // Centro del sprite
     bunnies.push(bunny);
