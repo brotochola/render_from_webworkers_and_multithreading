@@ -80,7 +80,7 @@ async function initPIXI(e) {
   app = new PIXI.Application({ width, height, resolution, view });
 
   // Cargar la textura
-  const texture = await PIXI.Assets.load("/1.png");
+  const texture = await PIXI.Assets.load("1.png");
 
   // Crear 1000 sprites de bunny
   for (let i = 0; i < ENTITY_COUNT; i++) {
@@ -166,3 +166,4 @@ self.onmessage = (e) => {
     self.postMessage({ msg: "frameCount", frameCount: FRAMENUM });
   }
 };
+
